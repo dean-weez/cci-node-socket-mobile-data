@@ -48,6 +48,20 @@ function setup() {
   textAlign(CENTER, CENTER);
   fill(255);
   nickname = random(handles);
+
+  // Request device motion permission on iOS
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    // iOS 13+ requires permission
+    DeviceMotionEvent.requestPermission()
+      .then(response => {
+        if (response === 'granted') {
+          window.addEventListener('devicemotion', (e) => {
+            // Motion data will now be available
+          });
+        }
+      })
+      .catch(console.error);
+  }
 }
 
 function draw() {
@@ -57,7 +71,13 @@ function draw() {
   textSize(24);
   text(`Your code name is: ${nickname}.`, width / 2, height / 2);
   textSize(16);
-  text('Move your phone around.', width / 2, height / 2 + 40);
+  
+  // Show different message based on device type
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    text('Tap the screen to enable motion sensors.', width / 2, height / 2 + 40);
+  } else {
+    text('Move your phone around.', width / 2, height / 2 + 40);
+  }
 
   if (frameCount % updateRate === 0) {
     const data = {
