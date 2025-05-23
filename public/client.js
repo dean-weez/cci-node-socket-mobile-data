@@ -10,6 +10,9 @@
 
 const SOCKET_URL = window.location.host + "/client";
 const socket = io.connect(SOCKET_URL);
+let permissionGranted = false;
+
+const requestAccessButton = document.getElementById('request-access');
 
 const updateRate = 30; // frames
 
@@ -52,16 +55,28 @@ function setup() {
   // Request device motion permission on iOS
   if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
     // iOS 13+ requires permission
-    DeviceMotionEvent.requestPermission()
-      .then(response => {
-        if (response === 'granted') {
-          window.addEventListener('devicemotion', (e) => {
-            // Motion data will now be available
-          });
-        }
-      })
-      .catch(console.error);
+    requestAccessButton.addEventListener('click', requestAccess);
   }
+}
+
+function requestAccess() {
+  DeviceMotionEvent.requestPermission()
+    .then(response => {
+      if (response === 'granted') {
+        permissionGranted = true;
+        console.log("Accelerometer permission granted.");
+        // You might want to hide the button or give other UI feedback here
+        requestAccessButton.style.display = 'none';
+      } else {
+        permissionGranted = false;
+        console.warn("Accelerometer permission denied.");
+        // You could display a message to the user here
+      }
+    })
+    .catch(error => {
+      console.error("Error requesting accelerometer permission:", error);
+      // Display an error message to the user
+    });
 }
 
 function draw() {
@@ -71,13 +86,6 @@ function draw() {
   textSize(24);
   text(`Your code name is: ${nickname}.`, width / 2, height / 2);
   textSize(16);
-  
-  // Show different message based on device type
-  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-    text('Tap the screen to enable motion sensors.', width / 2, height / 2 + 40);
-  } else {
-    text('Move your phone around.', width / 2, height / 2 + 40);
-  }
 
   if (frameCount % updateRate === 0) {
     const data = {
